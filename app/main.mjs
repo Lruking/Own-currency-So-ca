@@ -3,15 +3,12 @@ import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'di
 const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
 
-// スラッシュコマンドを作る（例：pingコマンド）
 const commands = [
   new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Ping Pong!'),
 ].map(command => command.toJSON());
 
-// コマンドをグローバル登録（全サーバー対象）
-// guildIdを使わずに全体に登録する場合（反映に時間かかる）
 const rest = new REST({ version: '10' }).setToken(token);
 
 async function registerCommands() {
@@ -19,7 +16,7 @@ async function registerCommands() {
     console.log('Started refreshing application (/) commands.');
 
     await rest.put(
-      Routes.applicationCommands(clientId), // ← guildIdはなし！
+      Routes.applicationCommands(clientId),
       { body: commands },
     );
 
@@ -31,11 +28,10 @@ async function registerCommands() {
 
 registerCommands();
 
-// Discordクライアント作成（必要なIntentはここで指定）
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+  console.log(`Logged in as ${client.user.tag}!`); // ← ここを直す！
 });
 
 client.on('interactionCreate', async interaction => {
@@ -46,4 +42,4 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-client.login(TOKEN);
+client.login(token);

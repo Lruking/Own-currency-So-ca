@@ -58,17 +58,10 @@ const rest = new REST({ version: '10' }).setToken(token);
   }
 })();
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
-});
-
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === 'ping') {
-    // Firebase Realtime Databaseの例（自由に変えてください）
     const db = admin.database();
     const ref = db.ref('test/message');
 
@@ -78,13 +71,13 @@ client.on('interactionCreate', async interaction => {
     const value = snapshot.val();
 
     await interaction.reply(`pong! DB says: ${value}`);
-  };
+  }
+
   if (interaction.commandName === 'login') {
     const db = admin.database();
     const userId = interaction.user.id;
     const userRef = db.ref(`users/${userId}`);
 
-    // JST の「今日」
     const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
                     .toISOString()
                     .split('T')[0];
@@ -116,26 +109,28 @@ client.on('interactionCreate', async interaction => {
       console.error("エラーが発生しました:", error);
       return await interaction.reply('エラーが発生しました。もう一度試してください。');
     }
-if (interaction.commandName === 'money') {
-  const db = admin.database();
-  const userId = interaction.user.id;
-  const userRef = db.ref(`users/${userId}`);
-
-  try {
-    const snapshot = await userRef.once('value');
-    const data = snapshot.val();
-
-    if (!data) {
-      return await interaction.reply('あなたの残高は 0 ソーカです。');
-    } else {
-      const money = data.balance;
-      return await interaction.reply(`あなたの残高は ${money} ソーカです。`);
-    }
-  } catch (error) {
-    console.error(error);
-    return await interaction.reply('残高の取得中にエラーが発生しました。');
   }
-}
+
+  if (interaction.commandName === 'money') {
+    const db = admin.database();
+    const userId = interaction.user.id;
+    const userRef = db.ref(`users/${userId}`);
+
+    try {
+      const snapshot = await userRef.once('value');
+      const data = snapshot.val();
+
+      if (!data) {
+        return await interaction.reply('あなたの残高は 0 ソーカです。');
+      } else {
+        const money = data.balance;
+        return await interaction.reply(`あなたの残高は ${money} ソーカです。`);
+      }
+    } catch (error) {
+      console.error(error);
+      return await interaction.reply('残高の取得中にエラーが発生しました。');
+    }
+  }
 });
 
 client.login(token);

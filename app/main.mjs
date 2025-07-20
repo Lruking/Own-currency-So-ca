@@ -53,11 +53,13 @@ const commands = [
   .addStringOption(option =>
     option.setName('account')
       .setDescription('送金先の口座')
-      .setRequired(true))
+      .setRequired(true)
+  )
   .addIntegerOption(option =>
     option.setName('amount')
       .setDescription('送金するソーカ')
-      .setRequired(true);
+      .setRequired(true)
+  )
 
 ].map(command => command.toJSON());
 

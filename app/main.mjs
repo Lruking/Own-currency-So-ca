@@ -77,7 +77,19 @@ const commands = [
       option.setName('password')
         .setDescription('共有パスワード（任意）')
         .setRequired(false)),
-
+  new SlashCommandBuilder()
+  .setName('check')
+  .setDescription('口座の残高を確認します。')
+  .addStringOption(option =>
+    option.setName('name')
+      .setDescription('確認する口座名')
+      .setRequired(true)
+  )
+  .addStringOption(option =>
+    option.setName('password')
+    .setDescription('（任意）パスワード')
+    .setRequired(false)
+  );
 ].map(command => command.toJSON());
 
 // コマンド登録処理
@@ -472,6 +484,37 @@ else if (interaction.commandName === 'withdraw') {
       ephemeral: true,
     });
   }
+}
+else if (interaction.commandName === 'check') {
+  const name = interaction.options.getString('name');
+  const password = interaction.options.getString('password') ?? null;
+
+  const accountRef = db.ref(`accounts/${name}`);
+  const snapshot = await accountRef.once('value');
+
+  if (!snapshot.exists()) {
+    const embed = new EmbedBuilder()
+      .setColor("#E74D3C")
+      .setTitle("エラー")
+      .setDescription("指定した口座は存在しません。");
+    return await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  const data = snapshot.val();
+
+  if (data.password && data.password !== password) {
+    const embed = new EmbedBuilder()
+      .setColor("#E74D3C")
+      .setTitle("エラー")
+      .setDescription("入力した共有パスワードが違います。");
+    return await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor("#2ecc70")
+    .setTitle("口座の残高")
+    .setDescription(`口座 **${name}** の残高は **${data.balance} ソーカ** です。`);
+  return await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 }); // これが interactionCreate のイベントリスナー閉じ
 // Botログイン

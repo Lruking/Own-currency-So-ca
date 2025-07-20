@@ -1,3 +1,4 @@
+
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
 import 'dotenv/config';
 import admin from 'firebase-admin';
@@ -31,6 +32,9 @@ const commands = [
   new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Ping Pong!'),
+    new SlashCommandBuilder()
+    .setName('login')
+    .setDescription('一日一回100ソーカが手に入ります。やったね！'),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(token);
@@ -71,7 +75,27 @@ client.on('interactionCreate', async interaction => {
     const value = snapshot.val();
 
     await interaction.reply(`pong! DB says: ${value}`);
-  }
+  };
+    if (interaction.commandName === 'login') {
+const db = getDatabase(firebaseApp);
+  const userId = interaction.user.id;
+
+  const userRef = ref(db, `users/${userId}`);
+
+  try {
+const snapshot = await get(userRef);
+const data = snapshot.val();
+
+if (data === null) {
+  // 新規ユーザーなら初期値1000をセット
+  await set(userRef, { balance: 1000 });
+  await interaction.reply('ログイン成功！初めての1000ソーカを受け取りました！');
+} else {
+  // 既存ユーザーの残高に1000足す
+  const newBalance = data.balance + 1000;
+  await set(userRef, { balance: newBalance });
+  await interaction.reply(`ログイン成功！1000ソーカ追加されました。現在の残高は ${newBalance} ソーカです。`);
+}
 });
 
 client.login(token);

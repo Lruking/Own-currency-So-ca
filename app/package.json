@@ -1,1 +1,14 @@
-
+{
+  "name": "Own_currency_So-ca",
+  "version": "1.0.0",
+  "description": "Money",
+  "main": "main.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node main.mjs"
+  },
+  "dependencies": {
+    "discord.js": "^14.0.0",
+    "dotenv": "^16.0.0"
+  }
+}

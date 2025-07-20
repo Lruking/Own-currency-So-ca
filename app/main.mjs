@@ -34,7 +34,10 @@ const commands = [
     .setDescription('Ping Pong!'),
     new SlashCommandBuilder()
     .setName('login')
-    .setDescription('一日一回100ソーカが手に入ります。やったね！'),
+    .setDescription('一日一回1000ソーカが手に入ります。やったね！'),
+    new SlashCommandBuilder()
+    .setName('money')
+    .setDescription('所持しているソーカを確認します'),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(token);
@@ -113,7 +116,26 @@ client.on('interactionCreate', async interaction => {
       console.error("エラーが発生しました:", error);
       return await interaction.reply('エラーが発生しました。もう一度試してください。');
     }
+if (interaction.commandName === 'money') {
+  const db = admin.database();
+  const userId = interaction.user.id;
+  const userRef = db.ref(`users/${userId}`);
+
+  try {
+    const snapshot = await userRef.once('value');
+    const data = snapshot.val();
+
+    if (!data) {
+      return await interaction.reply('あなたの残高は 0 ソーカです。');
+    } else {
+      const money = data.balance;
+      return await interaction.reply(`あなたの残高は ${money} ソーカです。`);
+    }
+  } catch (error) {
+    console.error(error);
+    return await interaction.reply('残高の取得中にエラーが発生しました。');
   }
+}
 });
 
 client.login(token);

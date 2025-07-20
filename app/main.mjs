@@ -6,13 +6,25 @@ const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
 const guildId = process.env.TEST_SERVER;
 
-// Firebase秘密鍵JSONを環境変数から読み込み
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-console.log(serviceAccount);
+// main.mjs の例
+let rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON; // ← env から取得しているならここが undefined の可能性
+
+if (!rawData) {
+  console.error("環境変数が設定されていません");
+  process.exit(1); // graceful に終了
+}
+
+let data;
+try {
+  data = JSON.parse(rawData);
+} catch (err) {
+  console.error("JSONのパースに失敗しました:", err);
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://YOUR_PROJECT_ID.firebaseio.com',  // ご自身のFirebaseのRealtime Database URLに変えてください。
+  databaseURL: 'https://own-currency-so-ca-default-rtdb.firebaseio.com/',  // ご自身のFirebaseのRealtime Database URLに変えてください。
 });
 
 const commands = [

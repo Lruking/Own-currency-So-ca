@@ -75,8 +75,8 @@ client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-// コマンド受信時の処理
-client.on('interactionCreate', async interaction => {
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
  if (interaction.commandName === 'login') {
   const db = admin.database();
   const userId = interaction.user.id;

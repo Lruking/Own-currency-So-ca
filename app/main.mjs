@@ -45,3 +45,5 @@ client.on('interactionCreate', async interaction => {
     await interaction.reply('pong!');
   }
 });
+
+client.login(TOKEN);

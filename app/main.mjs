@@ -93,7 +93,7 @@ if (interaction.commandName === 'login') {
         // 既存ユーザーの残高に1000足す
         const newBalance = data.balance + 1000;
         await userRef.set({ balance: newBalance });
-        await interaction.reply(`ログイン成功！1000ソーカ獲得しました！現在の残高は ${newBalance} ソーカです。`);
+        await interaction.reply(`ログイン成功！1000ソーカ獲得しました！現在の残高は ${newBalance} ソーカです！`);
       }
     } catch (error) {
       console.error(error);

@@ -77,29 +77,91 @@ client.on('interactionCreate', async interaction => {
     await interaction.reply(`pong! DB says: ${value}`);
   };
 if (interaction.commandName === 'login') {
-    const db = admin.database();
-    const userId = interaction.user.id;
-    const userRef = db.ref(`users/${userId}`);
+if (interaction.commandName === 'login') {
+  const db = admin.database();
+  const userId = interaction.user.id;
+  const userRef = db.ref(`users/${userId}`);
 
-    try {
-      const snapshot = await userRef.once('value');
-      const data = snapshot.val();
+  // ────── ここから ──────
+  // ① JST の「今日」を正しく取得
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+                  .toISOString()
+                  .split('T')[0];
+  // ────── ここまで ──────
 
-      if (data === null) {
-        // 新規ユーザーなら初期値1000をセット
-        await userRef.set({ balance: 1000 });
-        await interaction.reply('ログイン成功！初めての1000ソーカを受け取りました！');
-      } else {
-        // 既存ユーザーの残高に1000足す
-        const newBalance = data.balance + 1000;
-        await userRef.set({ balance: newBalance });
-        await interaction.reply(`ログイン成功！1000ソーカ獲得しました！現在の残高は ${newBalance} ソーカです！`);
-      }
-    } catch (error) {
-      console.error(error);
-      await interaction.reply('エラーが発生しました。もう一度試してください。');
+  try {
+    const snapshot = await userRef.once('value');
+    const data = snapshot.val();
+
+    if (!data) {
+      // 新規ユーザー
+      await userRef.set({
+        balance: 1000,
+        lastLogin: today
+      });
+      return await interaction.reply('ログイン成功！初めての1000ソーカを受け取りました！');
     }
+
+    // ② すでに今日ログイン済みならここで終わる
+    if (data.lastLogin === today) {
+      return await interaction.reply('今日はもうログインボーナスを受け取っています。また明日来てね！');
+    }
+
+    // ③ ボーナス追加＆日付更新
+    const newBalance = data.balance + 1000;
+    await userRef.set({
+      balance: newBalance,
+      lastLogin: today
+    });
+    return await interaction.reply(`ログイン成功！1000ソーカ追加されました。現在の残高は ${newBalance} ソーカです。`);
+
+  } catch (error) {
+    console.error("エラーが発生しました:", error);
+    return await interaction.reply('エラーが発生しました。もう一度試してください。');
   }
+}if (interaction.commandName === 'login') {
+  const db = admin.database();
+  const userId = interaction.user.id;
+  const userRef = db.ref(`users/${userId}`);
+
+  // ────── ここから ──────
+  // ① JST の「今日」を正しく取得
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+                  .toISOString()
+                  .split('T')[0];
+  // ────── ここまで ──────
+
+  try {
+    const snapshot = await userRef.once('value');
+    const data = snapshot.val();
+
+    if (!data) {
+      // 新規ユーザー
+      await userRef.set({
+        balance: 1000,
+        lastLogin: today
+      });
+      return await interaction.reply('ログイン成功！初めての1000ソーカを受け取りました！');
+    }
+
+    // ② すでに今日ログイン済みならここで終わる
+    if (data.lastLogin === today) {
+      return await interaction.reply('今日はもうログインボーナスを受け取っています。また明日来てね！');
+    }
+
+    // ③ ボーナス追加＆日付更新
+    const newBalance = data.balance + 1000;
+    await userRef.set({
+      balance: newBalance,
+      lastLogin: today
+    });
+    return await interaction.reply(`ログイン成功！1000ソーカ追加されました。現在の残高は ${newBalance} ソーカです。`);
+
+  } catch (error) {
+    console.error("エラーが発生しました:", error);
+    return await interaction.reply('エラーが発生しました。もう一度試してください。');
+  }
+}
 });
 
 client.login(token);

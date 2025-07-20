@@ -8,6 +8,7 @@ const guildId = process.env.TEST_SERVER;
 
 // Firebase秘密鍵JSONを環境変数から読み込み
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+console.log(serviceAccount);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

@@ -33,9 +33,11 @@ const commands = [
   new SlashCommandBuilder()
     .setName('login')
     .setDescription('一日一回1000ソーカが手に入ります。やったね！'),
+
   new SlashCommandBuilder()
     .setName('money')
     .setDescription('所持しているソーカを確認します'),
+
   new SlashCommandBuilder()
     .setName('create')
     .setDescription('新しい口座を作成します')
@@ -47,34 +49,34 @@ const commands = [
       option.setName('password')
         .setDescription('共有用パスワード（省略可能）')
         .setRequired(false)),
+
   new SlashCommandBuilder()
     .setName('transfer')
-  .setDescription('口座にソーカを送金します')
-  .addStringOption(option =>
-    option.setName('account')
-      .setDescription('送金先の口座')
-      .setRequired(true)
-  )
-  .addIntegerOption(option =>
-    option.setName('amount')
-      .setDescription('送金するソーカ')
-      .setRequired(true)
-  )
+    .setDescription('口座にソーカを送金します')
+    .addStringOption(option =>
+      option.setName('account')
+        .setDescription('送金先の口座')
+        .setRequired(true))
+    .addIntegerOption(option =>
+      option.setName('amount')
+        .setDescription('送金するソーカ')
+        .setRequired(true)),
+
   new SlashCommandBuilder()
-  .setName('withdraw')
-  .setDescription('口座から残高を引き出します')
-  .addStringOption(option =>
-    option.setName('account')
-      .setDescription('口座名')
-      .setRequired(true))
-  .addIntegerOption(option =>
-    option.setName('amount')
-      .setDescription('引き出す金額')
-      .setRequired(true))
-  .addStringOption(option =>
-    option.setName('password')
-      .setDescription('共有パスワード（任意）')
-      .setRequired(false)),
+    .setName('withdraw')
+    .setDescription('口座から残高を引き出します')
+    .addStringOption(option =>
+      option.setName('account')
+        .setDescription('口座名')
+        .setRequired(true))
+    .addIntegerOption(option =>
+      option.setName('amount')
+        .setDescription('引き出す金額')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('password')
+        .setDescription('共有パスワード（任意）')
+        .setRequired(false)),
 
 ].map(command => command.toJSON());
 

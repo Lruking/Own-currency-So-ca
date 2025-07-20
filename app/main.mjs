@@ -1,7 +1,9 @@
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import 'dotenv/config';
 
 const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
+const guildId = process.env.TEST_SERVER;
 
 const commands = [
   new SlashCommandBuilder()
@@ -11,12 +13,13 @@ const commands = [
 
 const rest = new REST({ version: '10' }).setToken(token);
 
-async function registerCommands() {
+(async () => {
   try {
     console.log('Started refreshing application (/) commands.');
 
+    // ギルドコマンドとして登録（即時反映）
     await rest.put(
-      Routes.applicationCommands(clientId),
+      Routes.applicationGuildCommands(clientId, guildId),
       { body: commands },
     );
 
@@ -24,14 +27,12 @@ async function registerCommands() {
   } catch (error) {
     console.error(error);
   }
-}
-
-registerCommands();
+})();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`); // ← ここを直す！
+  console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on('interactionCreate', async interaction => {

@@ -6,8 +6,8 @@ const clientId = process.env.APPLICATION_ID;
 // スラッシュコマンドを作る（例：pingコマンド）
 const commands = [
   new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Replies with Pong!'),
+    .setName('greet')
+    .setDescription('greet you!'),
 ].map(command => command.toJSON());
 
 // コマンドをグローバル登録（全サーバー対象）
@@ -36,6 +36,14 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
+});
+
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === 'greet') {
+    await interaction.reply('Nice meeting you!');
+  }
 });
 
 // BotをDiscordにログインさせる（これが必須）

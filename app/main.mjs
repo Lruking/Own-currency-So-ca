@@ -266,41 +266,41 @@ else if (interaction.commandName === 'transfer') {
 
   // バリデーション
   if (amount <= 0 || !Number.isInteger(amount)) {
-      const embed = new EmbedBuilder()
+      const nature_embed = new EmbedBuilder()
         .setColor("#E74D3C")
         .setTitle("エラー")
         .setDescription(`金額は自然数で入力してください。`);
     return await interaction.reply({
-        embeds: [embed],
+        embeds: [nature_embed],
         ephemeral: true
       });
   if (!userData || userData.money == null) {
-      const embed = new EmbedBuilder()
+      const nodata_embed = new EmbedBuilder()
         .setColor("#E74D3C")
         .setTitle("エラー")
         .setDescription(`あなたのデータがありません。/login してください。`);
     return await interaction.reply({
-        embeds: [embed],
+        embeds: [nodata_embed],
         ephemeral: true
       });
   }
   if (!accountData) {
-      const embed = new EmbedBuilder()
+      const notexist_embed = new EmbedBuilder()
         .setColor("#E74D3C")
         .setTitle("エラー")
         .setDescription(`指定された口座は存在しません。`);
     return await interaction.reply({
-        embeds: [embed],
+        embeds: [notexist_embed],
         ephemeral: true
       });
   }
   if (userData.money < amount) {
-      const embed = new EmbedBuilder()
+      const lessmoney_embed = new EmbedBuilder()
         .setColor("#E74D3C")
         .setTitle("エラー")
         .setDescription(`残高が足りません。`);
     return await interaction.reply({
-        embeds: [embed],
+        embeds: [lessmoney_embed],
         ephemeral: true
       });
   }
@@ -314,23 +314,26 @@ else if (interaction.commandName === 'transfer') {
   const accountOwnerId = accountData.owner;
   const accountOwner = await client.users.fetch(accountOwnerId);
   try {
-    const embed = new EmbedBuilder()
+    const transfered_embed = new EmbedBuilder()
         .setColor("#FFD700")
         .setTitle("口座に入金されました")
         .setDescription(`${interaction.user.username} から ${accountName} に ${amount} ソーカ入金されました！\n口座の残高：${newBalance} ソーカ`);
-    await accountOwner.send({ embeds: [embed] });
+    await accountOwner.send({ embeds: [transfered_embed] });
   } catch (err) {
     console.error('DM送信に失敗しました:', err);
   }
 
   // 成功メッセージ
 
-  const embed = new EmbedBuilder()
+  const success_embed = new EmbedBuilder()
       .setColor("#FFD700")
       .setTitle("送金成功")
       .setDescription(`${accountName} に ${amount} ソーカを入金しました！`);
-}
-});
+  return await interaction.reply({
+    embeds: [notexist_embed],
+    ephemeral: true
+  });
+  }
 
 // Botログイン
 client.login(token);

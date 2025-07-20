@@ -12,7 +12,7 @@ console.log(serviceAccount);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://YOUR_PROJECT_ID.firebaseio.com',  // ご自身のFirebaseのRealtime Database URLに変えてください
+  databaseURL: 'https://YOUR_PROJECT_ID.firebaseio.com',  // ご自身のFirebaseのRealtime Database URLに変えてください。
 });
 
 const commands = [

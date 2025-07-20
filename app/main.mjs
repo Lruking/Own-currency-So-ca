@@ -1,4 +1,3 @@
-
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
 import 'dotenv/config';
 import admin from 'firebase-admin';
@@ -7,46 +6,48 @@ const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
 const guildId = process.env.TEST_SERVER;
 
-// main.mjs の例
-let rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON; // ← env から取得しているならここが undefined の可能性ｗ
+// FirebaseサービスアカウントのJSON文字列を環境変数から取得
+const rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
 if (!rawData) {
   console.error("環境変数が設定されていません");
-  process.exit(1); // graceful に終了
+  process.exit(1);
 }
 
-let data;
+let serviceAccount;
 try {
-  data = JSON.parse(rawData);
+  serviceAccount = JSON.parse(rawData);
 } catch (err) {
   console.error("JSONのパースに失敗しました:", err);
   process.exit(1);
 }
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+
+// Firebase初期化
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://own-currency-so-ca-default-rtdb.firebaseio.com/',  // ご自身のFirebaseのRealtime Database URLに変えてください。
+  databaseURL: 'https://own-currency-so-ca-default-rtdb.firebaseio.com/',
 });
 
+// Discordのスラッシュコマンド定義
 const commands = [
   new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Ping Pong!'),
-    new SlashCommandBuilder()
+  new SlashCommandBuilder()
     .setName('login')
     .setDescription('一日一回1000ソーカが手に入ります。やったね！'),
-    new SlashCommandBuilder()
+  new SlashCommandBuilder()
     .setName('money')
     .setDescription('所持しているソーカを確認します'),
 ].map(command => command.toJSON());
 
+// コマンド登録処理
 const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
   try {
     console.log('Started refreshing application (/) commands.');
 
-    // ギルドコマンドとして登録（即時反映）
     await rest.put(
       Routes.applicationGuildCommands(clientId, guildId),
       { body: commands },
@@ -58,6 +59,15 @@ const rest = new REST({ version: '10' }).setToken(token);
   }
 })();
 
+// Discordクライアント作成（ここがポイント！）
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+// Bot起動時のログ
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
+});
+
+// コマンド受信時の処理
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -78,6 +88,7 @@ client.on('interactionCreate', async interaction => {
     const userId = interaction.user.id;
     const userRef = db.ref(`users/${userId}`);
 
+    // JSTの日付を取得
     const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
                     .toISOString()
                     .split('T')[0];
@@ -133,4 +144,5 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+// Botログイン
 client.login(token);

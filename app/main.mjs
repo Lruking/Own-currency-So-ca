@@ -154,42 +154,43 @@ client.on('interactionCreate', async interaction => {
   }
 }
 
-  if (interaction.commandName === 'money') {
-    const db = admin.database();
-    const userId = interaction.user.id;
-    const userRef = db.ref(`users/${userId}`);
+if (interaction.commandName === 'money') {
+  const db = admin.database();
+  const userId = interaction.user.id;
+  const userRef = db.ref(`users/${userId}`);
 
-    try {
-      const snapshot = await userRef.once('value');
-      const data = snapshot.val();
+  try {
+    const snapshot = await userRef.once('value');
+    const data = snapshot.val();
 
-      if (!data) {
-          const embed = new EmbedBuilder()
-      .setColor("#FFD700")
-      .setTitle("残高確認")
-      .setDescription(`あなたの現在の残高：0 ソーカ`)
-      }
-        await interaction.reply({
-      embeds: [embed],
-      ephemeral: true // ←これを忘れずに！
-    });
-      } else {
-        const money = data.balance;
-          const embed = new EmbedBuilder()
-      .setColor("#FFD700")
-      .setTitle("残高確認")
-      .setDescription(`あなたの現在の残高：${money} ソーカ`)
-      }
-        await interaction.reply({
-      embeds: [embed],
-      ephemeral: true // ←これを忘れずに！
-    });
-      }
-    } catch (error) {
-      console.error(error);
-      return await interaction.reply('残高の取得中にエラーが発生しました。');
+    let embed;
+
+    if (!data) {
+      embed = new EmbedBuilder()
+        .setColor("#FFD700")
+        .setTitle("残高確認")
+        .setDescription(`あなたの現在の残高：0 ソーカ`);
+    } else {
+      const money = data.balance;
+      embed = new EmbedBuilder()
+        .setColor("#FFD700")
+        .setTitle("残高確認")
+        .setDescription(`あなたの現在の残高：${money} ソーカ`);
     }
+
+    await interaction.reply({
+      embeds: [embed],
+      ephemeral: true
+    });
+    
+  } catch (error) {
+    console.error(error);
+    return await interaction.reply({
+      content: '残高の取得中にエラーが発生しました。',
+      ephemeral: true
+    });
   }
+}
 });
 
 // Botログイン

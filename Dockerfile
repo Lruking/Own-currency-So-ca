@@ -14,4 +14,4 @@ RUN npm install
 EXPOSE 3000
 
 # アプリの起動、コマンドを指定しよう。index.jsなら"node", "index.js"
-CMD ["node", "main.py"]
+CMD ["node", "main.mjs"]

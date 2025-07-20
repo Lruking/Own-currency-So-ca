@@ -57,7 +57,7 @@ const commands = [
   .addIntegerOption(option =>
     option.setName('amount')
       .setDescription('送金するソーカ')
-      .setRequired(true));
+      .setRequired(true);
 
 ].map(command => command.toJSON());
 

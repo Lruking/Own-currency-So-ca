@@ -89,7 +89,6 @@ client.on('interactionCreate', async interaction => {
   const user = interaction.user;
   const userRef = db.ref(`users/${userId}`);
 
-  // JSTの日付を取得
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
                   .toISOString()
                   .split('T')[0];
@@ -100,14 +99,13 @@ client.on('interactionCreate', async interaction => {
     const avatarUrl = user.displayAvatarURL({ dynamic: true, size: 1024 });
 
     if (!data) {
-      // 新規ユーザー処理
       await userRef.set({
         balance: 1000,
         lastLogin: today
       });
 
       const embed = new EmbedBuilder()
-        .setColor("#FFD700") // 黄色
+        .setColor("#FFD700")
         .setTitle("ログイン成功！")
         .setDescription(`@everyone\n${user.username} さんが初めてログインし、1000ソーカを受け取りました！\n現在の残高：1000 ソーカ`)
         .setFooter({
@@ -123,16 +121,14 @@ client.on('interactionCreate', async interaction => {
       return await interaction.reply('今日はもうログインボーナスを受け取っています。また明日来てね！');
     }
 
-    // 既存ユーザー処理
     const newBalance = data.balance + 1000;
-
     await userRef.set({
       balance: newBalance,
       lastLogin: today
     });
 
     const embed = new EmbedBuilder()
-      .setColor("#FFD700") // 黄色
+      .setColor("#FFD700")
       .setTitle("ログイン成功！")
       .setDescription(`@everyone\n${user.username} さんが今日ログインし、1000ソーカを受け取りました！\n現在の残高：${newBalance} ソーカ`)
       .setFooter({

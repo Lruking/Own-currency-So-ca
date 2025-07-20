@@ -60,6 +60,21 @@ const commands = [
       .setDescription('送金するソーカ')
       .setRequired(true)
   )
+  new SlashCommandBuilder()
+  .setName('withdraw')
+  .setDescription('口座から残高を引き出します')
+  .addStringOption(option =>
+    option.setName('account')
+      .setDescription('口座名')
+      .setRequired(true))
+  .addIntegerOption(option =>
+    option.setName('amount')
+      .setDescription('引き出す金額')
+      .setRequired(true))
+  .addStringOption(option =>
+    option.setName('password')
+      .setDescription('共有パスワード（任意）')
+      .setRequired(false)),
 
 ].map(command => command.toJSON());
 
@@ -330,12 +345,131 @@ else if (interaction.commandName === 'transfer') {
   // 成功メッセージ
   const success_embed = new EmbedBuilder()
     .setColor("#FFD700")
-    .setTitle("送金成功")
+    .setTitle("入金成功")
     .setDescription(`${accountName} に ${amount} ソーカを入金しました！`);
   return await interaction.reply({
     embeds: [success_embed],
     ephemeral: true
   });
+}
+else if (interaction.commandName === 'withdraw') {
+  const accountName = interaction.options.getString('account', true);
+  const amount = interaction.options.getInteger('amount', true);
+  const inputPassword = interaction.options.getString('password') ?? null;
+  const userId = interaction.user.id;
+  const userName = interaction.user.username;
+
+  if (amount <= 0 || !Number.isInteger(amount)) {
+    const embed = new EmbedBuilder()
+      .setColor("#E74D3C")
+      .setTitle("エラー")
+      .setDescription("金額は自然数で入力してください。");
+    return await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  if (inputPassword === 'null') {
+    const embed = new EmbedBuilder()
+      .setColor("#E74D3C")
+      .setTitle("エラー")
+      .setDescription("無効なパスワードです。");
+    return await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  const userRef = db.ref(`users/${userId}`);
+  const accountRef = db.ref(`accounts/${accountName}`);
+
+  try {
+    // 口座とユーザーデータ取得
+    const [userSnap, accountSnap] = await Promise.all([userRef.get(), accountRef.get()]);
+    const userData = userSnap.val();
+    const accountData = accountSnap.val();
+
+    if (!userData || userData.balance == null) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription("あなたのデータがありません。/login してください。");
+      return await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    if (!accountData) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription("指定された口座は存在しません。");
+      return await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    if (userData.balance < amount) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription("残高が足りません。");
+      return await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    // パスワードチェック
+    // パスワードなし口座の場合、inputPasswordはnullか空文字のみ許可
+    if (accountData.password) {
+      // パスワードあり口座は作成者か正しいパスワードでないと拒否
+      if (userId !== accountData.owner && inputPassword !== accountData.password) {
+        const embed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("エラー")
+          .setDescription("パスワードが違います。");
+        return await interaction.reply({ embeds: [embed], ephemeral: true });
+      }
+    } else {
+      // パスワードなし口座は作成者のみ引き出し可
+      if (userId !== accountData.owner) {
+        const embed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("エラー")
+          .setDescription("この口座はパスワードが設定されていないため、作成者のみが引き出せます。");
+        return await interaction.reply({ embeds: [embed], ephemeral: true });
+      }
+    }
+
+    // 残高更新
+    await userRef.update({ balance: userData.balance - amount });
+    const newBalance = (accountData.balance || 0) - amount;
+    if (newBalance < 0) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription("口座の残高が不足しています。");
+      return await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+    await accountRef.update({ balance: newBalance });
+
+    // 作成者以外が引き出した場合、作成者にDMで通知
+    if (userId !== accountData.owner) {
+      try {
+        const ownerUser = await client.users.fetch(accountData.owner);
+        const dmEmbed = new EmbedBuilder()
+          .setColor("#FFA500")
+          .setTitle("口座から引き出しがありました")
+          .setDescription(`${userName} さんが口座「${accountName}」から ${amount} ソーカ引き出しました！\n口座の残高：${newBalance} ソーカ`);
+        await ownerUser.send({ embeds: [dmEmbed] });
+      } catch (err) {
+        console.error("DM送信失敗:", err);
+      }
+    }
+
+    // 成功メッセージ
+    const successEmbed = new EmbedBuilder()
+      .setColor("#2ecc70")
+      .setTitle("引き出し成功")
+      .setDescription(`口座「${accountName}」から ${amount} ソーカを引き出しました。\n残高：${newBalance} ソーカ`);
+    return await interaction.reply({ embeds: [successEmbed], ephemeral: true });
+
+  } catch (error) {
+    console.error(error);
+    return await interaction.reply({
+      content: "エラーが発生しました。もう一度試してください。",
+      ephemeral: true,
+    });
+  }
 }
 }); // これが interactionCreate のイベントリスナー閉じ
 // Botログイン

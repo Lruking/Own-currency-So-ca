@@ -31,9 +31,6 @@ admin.initializeApp({
 // Discordのスラッシュコマンド定義
 const commands = [
   new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Ping Pong!'),
-  new SlashCommandBuilder()
     .setName('login')
     .setDescription('一日一回1000ソーカが手に入ります。やったね！'),
   new SlashCommandBuilder()
@@ -80,9 +77,6 @@ client.once('ready', () => {
 
 // コマンド受信時の処理
 client.on('interactionCreate', async interaction => {
-    await interaction.reply(`pong!`);
-})
-
  if (interaction.commandName === 'login') {
   const db = admin.database();
   const userId = interaction.user.id;

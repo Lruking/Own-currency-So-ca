@@ -89,7 +89,7 @@ const commands = [
     option.setName('password')
     .setDescription('（任意）パスワード')
     .setRequired(false)
-  );
+    )
 ].map(command => command.toJSON());
 
 // コマンド登録処理

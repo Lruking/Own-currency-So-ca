@@ -312,17 +312,21 @@ else if (interaction.commandName === 'transfer') {
   const accountOwnerId = accountData.owner;
   const accountOwner = await client.users.fetch(accountOwnerId);
   try {
-    await accountOwner.send(
-      `${interaction.user.username} から ${accountName} に ${amount} ソーカ入金されました！\n` +
-      `口座の残高：${newBalance} ソーカ`
-    );
+    const embed = new EmbedBuilder()
+        .setColor("#FFD700")
+        .setTitle("口座に入金されました")
+        .setDescription(`${interaction.user.username} から ${accountName} に ${amount} ソーカ入金されました！\n口座の残高：${newBalance} ソーカ`);
+    await accountOwner.send({ embeds: [embed] });
   } catch (err) {
     console.error('DM送信に失敗しました:', err);
   }
 
   // 成功メッセージ
-    
-  await interaction.reply(`${accountName} に ${amount} ソーカを送金しました！`);
+
+  const embed = new EmbedBuilder()
+      .setColor("#FFD700")
+      .setTitle("送金成功")
+      .setDescription(`${accountName} に ${amount} ソーカを入金しました！`);
 }
 });
 

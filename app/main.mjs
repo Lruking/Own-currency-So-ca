@@ -21,7 +21,7 @@ try {
   console.error("JSONのパースに失敗しました:", err);
   process.exit(1);
 }
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: 'https://own-currency-so-ca-default-rtdb.firebaseio.com/',  // ご自身のFirebaseのRealtime Database URLに変えてください。

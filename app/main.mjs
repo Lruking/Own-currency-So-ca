@@ -1,11 +1,11 @@
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import 'dotenv/config'; // ← dotenvの読み込み（なければ無視）
 
 // 環境変数
 const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
-const guildId = process.env.TEST_SERVER; // 👈 ここ追加！
+const guildId = process.env.TEST_SERVER;
 
-// エラーチェック
 if (!token || !clientId || !guildId) {
   console.error('❌ TOKEN / APPLICATION_ID / TEST_SERVER のいずれかが未定義です');
   process.exit(1);
@@ -15,7 +15,7 @@ if (!token || !clientId || !guildId) {
 const commands = [
   new SlashCommandBuilder()
     .setName('greet')
-    .setDescription('greet you!'),
+    .setDescription('Greet you!'),
 ].map(command => command.toJSON());
 
 // RESTクライアントでギルドコマンドを登録
@@ -26,7 +26,7 @@ async function registerCommands() {
     console.log('🔁 ギルドコマンドを登録中...');
 
     await rest.put(
-      Routes.applicationGuildCommands(clientId, guildId), // ← 即反映！
+      Routes.applicationGuildCommands(clientId, guildId),
       { body: commands },
     );
 
@@ -36,15 +36,15 @@ async function registerCommands() {
   }
 }
 
-registerCommands();
-
-// Discordクライアントの起動
+// Discordクライアント
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once('ready', () => {
   console.log(`🤖 Botログイン完了: ${client.user.tag}`);
+  registerCommands(); // ← ログイン後に登録することでタイミングの問題を回避できることがある
 });
 
+// コマンド処理
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -54,8 +54,3 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(token);
-
-
-// BotをDiscordにログインさせる（これが必須）
-client.login(token);
-

@@ -46,7 +46,19 @@ const commands = [
     .addStringOption(option =>
       option.setName('password')
         .setDescription('共有用パスワード（省略可能）')
-        .setRequired(false))
+        .setRequired(false)),
+  new SlashCommandBuilder()
+    .setName('transfer')
+  .setDescription('口座にソーカを送金します')
+  .addStringOption(option =>
+    option.setName('account')
+      .setDescription('送金先の口座')
+      .setRequired(true))
+  .addIntegerOption(option =>
+    option.setName('amount')
+      .setDescription('送金するソーカ')
+      .setRequired(true));
+
 ].map(command => command.toJSON());
 
 // コマンド登録処理
@@ -235,6 +247,82 @@ else if (interaction.commandName === 'create') {
       ephemeral: true
     });
   }
+}
+  
+else if (interaction.commandName === 'transfer') {
+  const userId = interaction.user.id;
+  const accountName = interaction.options.getString('account');
+  const amount = interaction.options.getInteger('amount');
+
+  const userRef = db.ref(`users/${userId}`);
+  const accountRef = db.ref(`accounts/${accountName}`);
+
+  // データ取得
+  const [userSnap, accountSnap] = await Promise.all([userRef.get(), accountRef.get()]);
+  const userData = userSnap.val();
+  const accountData = accountSnap.val();
+
+  // バリデーション
+  if (amount <= 0 || !Number.isInteger(amount)) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription(`金額は自然数で入力してください。`);
+    return await interaction.reply({
+        embeds: [embed],
+        ephemeral: true
+      });
+  if (!userData || userData.money == null) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription(`あなたのデータがありません。/login してください。`);
+    return await interaction.reply({
+        embeds: [embed],
+        ephemeral: true
+      });
+  }
+  if (!accountData) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription(`指定された口座は存在しません。`);
+    return await interaction.reply({
+        embeds: [embed],
+        ephemeral: true
+      });
+  }
+  if (userData.money < amount) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription(`残高が足りません。`);
+    return await interaction.reply({
+        embeds: [embed],
+        ephemeral: true
+      });
+  }
+
+  // 残高更新
+  await userRef.update({ money: userData.money - amount });
+  const newBalance = (accountData.balance || 0) + amount;
+  await accountRef.update({ balance: newBalance });
+
+  // DM送信
+  const accountOwnerId = accountData.owner;
+  const accountOwner = await client.users.fetch(accountOwnerId);
+  try {
+    await accountOwner.send(
+      `${interaction.user.username} から ${accountName} に ${amount} ソーカ入金されました！\n` +
+      `口座の残高：${newBalance} ソーカ`
+    );
+  } catch (err) {
+    console.error('DM送信に失敗しました:', err);
+  }
+
+  // 成功メッセージ
+    
+  await interaction.reply(`${accountName} に ${amount} ソーカを送金しました！`);
 }
 });
 

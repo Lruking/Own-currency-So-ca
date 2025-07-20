@@ -337,7 +337,7 @@ else if (interaction.commandName === 'transfer') {
     ephemeral: true
   });
 }
-}
+}); // これが interactionCreate のイベントリスナー閉じ
 // Botログイン
 client.login(token);
 

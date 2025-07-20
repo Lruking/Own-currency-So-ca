@@ -132,10 +132,16 @@ client.on('interactionCreate', async interaction => {
       const data = snapshot.val();
 
       if (!data) {
-        return await interaction.reply('あなたの残高は 0 ソーカです。');
+        await interaction.reply({
+          content: `あなたの残高は 0 ソーカです。`,
+          ephemeral: true
+        });
       } else {
         const money = data.balance;
-        return await interaction.reply(`あなたの残高は ${money} ソーカです。`);
+        await interaction.reply({
+          content: `あなたの残高は ${money} ソーカです。`,
+          ephemeral: true
+        });
       }
     } catch (error) {
       console.error(error);

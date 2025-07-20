@@ -164,16 +164,28 @@ client.on('interactionCreate', async interaction => {
       const data = snapshot.val();
 
       if (!data) {
+          const embed = new EmbedBuilder()
+      .setColor("#FFD700")
+      .setTitle("残高確認")
+      .setDescription(`あなたの現在の残高：0 ソーカ`)
+      .setFooter({
+      })
         await interaction.reply({
-          content: `あなたの残高は 0 ソーカです。`,
-          ephemeral: true
-        });
+      embeds: [embed],
+      ephemeral: true // ←これを忘れずに！
+    });
       } else {
         const money = data.balance;
+          const embed = new EmbedBuilder()
+      .setColor("#FFD700")
+      .setTitle("残高確認")
+      .setDescription(`あなたの現在の残高：${money} ソーカ`)
+      .setFooter({
+      })
         await interaction.reply({
-          content: `あなたの残高は ${money} ソーカです。`,
-          ephemeral: true
-        });
+      embeds: [embed],
+      ephemeral: true // ←これを忘れずに！
+    });
       }
     } catch (error) {
       console.error(error);

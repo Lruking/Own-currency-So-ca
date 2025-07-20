@@ -168,7 +168,7 @@ client.on('interactionCreate', async interaction => {
       .setColor("#FFD700")
       .setTitle("残高確認")
       .setDescription(`あなたの現在の残高：0 ソーカ`)
-      })
+      }
         await interaction.reply({
       embeds: [embed],
       ephemeral: true // ←これを忘れずに！
@@ -179,7 +179,7 @@ client.on('interactionCreate', async interaction => {
       .setColor("#FFD700")
       .setTitle("残高確認")
       .setDescription(`あなたの現在の残高：${money} ソーカ`)
-      })
+      }
         await interaction.reply({
       embeds: [embed],
       ephemeral: true // ←これを忘れずに！

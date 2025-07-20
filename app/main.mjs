@@ -118,7 +118,16 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (data.lastLogin === today) {
-      return await interaction.reply('今日はもうログインボーナスを受け取っています。また明日来てね！');
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("ログイン済")
+        .setDescription(`今日のログボは既に受け取っています。\nまた受け取れる明日までお待ちください。`)
+        .setFooter({
+          text: user.username,
+          iconURL: avatarUrl
+        })
+        .setThumbnail(avatarUrl);
+      return await interaction.reply({ embeds: [embed]});
     }
 
     const newBalance = data.balance + 1000;

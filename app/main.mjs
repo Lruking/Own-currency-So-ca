@@ -191,7 +191,7 @@ if (interaction.commandName === 'money') {
     });
   }
   
-  if (interaction.commandName === 'create') {
+if (interaction.commandName === 'create') {
   const accountName = interaction.options.getString('account', true);
   const password = interaction.options.getString('password') ?? null;
   const db = admin.database();
@@ -202,7 +202,7 @@ if (interaction.commandName === 'money') {
     const snapshot = await accountRef.once('value');
 
     if (snapshot.exists()) {
-      embed = new EmbedBuilder()
+      const embed = new EmbedBuilder()
         .setColor("#E74D3C")
         .setTitle("口座を作成できませんでした。")
         .setDescription(`口座「${accountName}」はすでに存在しています。他の名前をお試しください。`);
@@ -210,6 +210,7 @@ if (interaction.commandName === 'money') {
         embeds: [embed],
         ephemeral: true
       });
+      return; // 早期終了しないと上書きされる
     }
 
     await accountRef.set({
@@ -219,19 +220,19 @@ if (interaction.commandName === 'money') {
       createdAt: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
     });
 
-    embed = new EmbedBuilder()
-        .setColor("#2ecc70")
-        .setTitle("口座作成完了")
-        .setDescription(`口座「${accountName}」を作成しました！`);
+    const embed = new EmbedBuilder()
+      .setColor("#2ecc70")
+      .setTitle("口座作成完了")
+      .setDescription(`口座「${accountName}」を作成しました！`);
     await interaction.reply({
-        embeds: [embed],
-        ephemeral: true
-      });
+      embeds: [embed],
+      ephemeral: true
+    });
 
   } catch (err) {
     console.error(err);
     await interaction.reply({
-      content: '⚠️ 口座の作成中にエラーが発生しました。',
+      content: '口座の作成中にエラーが発生しました。',
       ephemeral: true
     });
   }

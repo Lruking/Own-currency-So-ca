@@ -1,10 +1,13 @@
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import 'dotenv/config';
 import admin from 'firebase-admin';
+import express from 'express';
 
 const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
 const guildId = process.env.TEST_SERVER;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 // FirebaseサービスアカウントのJSON文字列を環境変数から取得！
 const rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -520,3 +523,10 @@ else if (interaction.commandName === 'check') {
 // Botログイン
 client.login(token);
 
+app.get('/', (req, res) => {
+  res.send('Bot is alive!');
+});
+
+app.listen(PORT, () => {
+  console.log(`Express server running on port ${PORT}`);
+});

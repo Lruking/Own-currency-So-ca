@@ -6,7 +6,7 @@ const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
 const guildId = process.env.TEST_SERVER;
 
-// FirebaseサービスアカウントのJSON文字列を環境変数から取得！！
+// FirebaseサービスアカウントのJSON文字列を環境変数から取得！
 const rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
 if (!rawData) {

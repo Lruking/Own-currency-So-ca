@@ -81,7 +81,7 @@ client.once('ready', () => {
 // コマンド受信時の処理
 client.on('interactionCreate', async interaction => {
     await interaction.reply(`pong!`);
-  }
+})
 
  if (interaction.commandName === 'login') {
   const db = admin.database();

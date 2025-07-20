@@ -39,6 +39,17 @@ const commands = [
   new SlashCommandBuilder()
     .setName('money')
     .setDescription('所持しているソーカを確認します'),
+  new SlashCommandBuilder()
+  .setName('create')
+  .setDescription('新しい口座を作成します')
+  .addStringOption(option =>
+    option.setName('account')
+      .setDescription('作成する口座名（ユニークな名前）')
+      .setRequired(true))
+  .addStringOption(option =>
+    option.setName('password')
+      .setDescription('共有用パスワード（省略可能）')
+      .setRequired(false))
 ].map(command => command.toJSON());
 
 // コマンド登録処理
@@ -69,18 +80,7 @@ client.once('ready', () => {
 
 // コマンド受信時の処理
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-
-  if (interaction.commandName === 'ping') {
-    const db = admin.database();
-    const ref = db.ref('test/message');
-
-    await ref.set('pong was called');
-
-    const snapshot = await ref.once('value');
-    const value = snapshot.val();
-
-    await interaction.reply(`pong! DB says: ${value}`);
+    await interaction.reply(`pong!`);
   }
 
  if (interaction.commandName === 'login') {
@@ -190,6 +190,52 @@ if (interaction.commandName === 'money') {
       ephemeral: true
     });
   }
+  
+  if (interaction.commandName === 'create') {
+  const accountName = interaction.options.getString('account', true);
+  const password = interaction.options.getString('password') ?? null;
+  const db = admin.database();
+  const userId = interaction.user.id;
+  const accountRef = db.ref(`accounts/${accountName}`);
+
+  try {
+    const snapshot = await accountRef.once('value');
+
+    if (snapshot.exists()) {
+      embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("口座を作成できませんでした。")
+        .setDescription(`口座「${accountName}」はすでに存在しています。他の名前をお試しください。`);
+      await interaction.reply({
+        embeds: [embed],
+        ephemeral: true
+      });
+    }
+
+    await accountRef.set({
+      owner: userId,
+      password: password,
+      balance: 0,
+      createdAt: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+    });
+
+    embed = new EmbedBuilder()
+        .setColor("#2ecc70")
+        .setTitle("口座作成完了")
+        .setDescription(`口座「${accountName}」を作成しました！`);
+    await interaction.reply({
+        embeds: [embed],
+        ephemeral: true
+      });
+
+  } catch (err) {
+    console.error(err);
+    await interaction.reply({
+      content: '⚠️ 口座の作成中にエラーが発生しました。',
+      ephemeral: true
+    });
+  }
+}
 }
 });
 

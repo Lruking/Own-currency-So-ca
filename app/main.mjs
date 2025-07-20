@@ -168,7 +168,6 @@ client.on('interactionCreate', async interaction => {
       .setColor("#FFD700")
       .setTitle("残高確認")
       .setDescription(`あなたの現在の残高：0 ソーカ`)
-      .setFooter({
       })
         await interaction.reply({
       embeds: [embed],
@@ -180,7 +179,6 @@ client.on('interactionCreate', async interaction => {
       .setColor("#FFD700")
       .setTitle("残高確認")
       .setDescription(`あなたの現在の残高：${money} ソーカ`)
-      .setFooter({
       })
         await interaction.reply({
       embeds: [embed],

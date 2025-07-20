@@ -8,7 +8,7 @@ const clientId = process.env.APPLICATION_ID;
 const guildId = process.env.TEST_SERVER;
 
 // main.mjs の例
-let rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON; // ← env から取得しているならここが undefined の可能性
+let rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON; // ← env から取得しているならここが undefined の可能性ｗ
 
 if (!rawData) {
   console.error("環境変数が設定されていません");

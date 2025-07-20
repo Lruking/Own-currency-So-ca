@@ -86,6 +86,7 @@ client.on('interactionCreate', async interaction => {
   if (interaction.commandName === 'login') {
     const db = admin.database();
     const userId = interaction.user.id;
+    const user = interaction.user;
     const userRef = db.ref(`users/${userId}`);
 
     // JSTの日付を取得
@@ -96,13 +97,23 @@ client.on('interactionCreate', async interaction => {
     try {
       const snapshot = await userRef.once('value');
       const data = snapshot.val();
+      const avatarUrl = user.displayAvatarURL({ dynamic: true, size: 1024 });
 
       if (!data) {
         await userRef.set({
           balance: 1000,
           lastLogin: today
         });
-        return await interaction.reply('ログイン成功！初めての1000ソーカを受け取りました！');
+        const embed = new EmbedBuilder()
+      .setColor("#FFD700") // 黄色
+      .setTitle("**ログイン成功！**")
+      .setDescription(`@everyone\n${interaction.user.username} さんが初めてログインし、1000ソーカを受け取りました！\n現在の残高：${newBalance} ソーカ`)
+      .setFooter({
+        text: interaction.user.username,
+        iconURL: avatarUrl
+      });
+
+    await interaction.reply({ embeds: [embed] });
       }
 
       if (data.lastLogin === today) {
@@ -115,7 +126,16 @@ client.on('interactionCreate', async interaction => {
         lastLogin: today
       });
 
-      return await interaction.reply(`ログイン成功！1000ソーカ追加されました。現在の残高は ${newBalance} ソーカです。`);
+      const embed = new EmbedBuilder()
+      .setColor("#FFD700") // 黄色
+      .setTitle("**ログイン成功！**")
+      .setDescription(`@everyone\n${interaction.user.username} さんが今日ログインし、1000ソーカを受け取りました！\n現在の残高：${newBalance} ソーカ`)
+      .setFooter({
+        text: interaction.user.username,
+        iconURL: member.user.displayAvatarURL({ dynamic: true }) // アイコン
+      });
+
+    await interaction.reply({ embeds: [embed] });
     } catch (error) {
       console.error("エラーが発生しました:", error);
       return await interaction.reply('エラーが発生しました。もう一度試してください。');

@@ -76,26 +76,30 @@ client.on('interactionCreate', async interaction => {
 
     await interaction.reply(`pong! DB says: ${value}`);
   };
-    if (interaction.commandName === 'login') {
-const db = getDatabase(firebaseApp);
-  const userId = interaction.user.id;
+if (interaction.commandName === 'login') {
+    const db = admin.database();
+    const userId = interaction.user.id;
+    const userRef = db.ref(`users/${userId}`);
 
-  const userRef = ref(db, `users/${userId}`);
+    try {
+      const snapshot = await userRef.once('value');
+      const data = snapshot.val();
 
-  try {
-const snapshot = await get(userRef);
-const data = snapshot.val();
-
-if (data === null) {
-  // 新規ユーザーなら初期値1000をセット
-  await set(userRef, { balance: 1000 });
-  await interaction.reply('ログイン成功！初めての1000ソーカを受け取りました！');
-} else {
-  // 既存ユーザーの残高に1000足す
-  const newBalance = data.balance + 1000;
-  await set(userRef, { balance: newBalance });
-  await interaction.reply(`ログイン成功！1000ソーカ追加されました。現在の残高は ${newBalance} ソーカです。`);
-}
+      if (data === null) {
+        // 新規ユーザーなら初期値1000をセット
+        await userRef.set({ balance: 1000 });
+        await interaction.reply('ログイン成功！初めての1000ソーカを受け取りました！');
+      } else {
+        // 既存ユーザーの残高に1000足す
+        const newBalance = data.balance + 1000;
+        await userRef.set({ balance: newBalance });
+        await interaction.reply(`ログイン成功！1000ソーカ獲得しました！現在の残高は ${newBalance} ソーカです。`);
+      }
+    } catch (error) {
+      console.error(error);
+      await interaction.reply('エラーが発生しました。もう一度試してください。');
+    }
+  }
 });
 
 client.login(token);

@@ -191,52 +191,51 @@ if (interaction.commandName === 'money') {
     });
   }
   
-if (interaction.commandName === 'create') {
-  const accountName = interaction.options.getString('account', true);
-  const password = interaction.options.getString('password') ?? null;
-  const db = admin.database();
-  const userId = interaction.user.id;
-  const accountRef = db.ref(`accounts/${accountName}`);
+  if (interaction.commandName === 'create') {
+    const accountName = interaction.options.getString('account', true);
+    const password = interaction.options.getString('password') ?? null;
+    const db = admin.database();
+    const userId = interaction.user.id;
+    const accountRef = db.ref(`accounts/${accountName}`);
 
-  try {
-    const snapshot = await accountRef.once('value');
+    try {
+      const snapshot = await accountRef.once('value');
 
-    if (snapshot.exists()) {
+      if (snapshot.exists()) {
+        const embed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("口座を作成できませんでした。")
+          .setDescription(`口座「${accountName}」はすでに存在しています。他の名前をお試しください。`);
+        return await interaction.reply({
+          embeds: [embed],
+          ephemeral: true
+        });
+      }
+
+      await accountRef.set({
+        owner: userId,
+        password: password,
+        balance: 0,
+        createdAt: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+      });
+
       const embed = new EmbedBuilder()
-        .setColor("#E74D3C")
-        .setTitle("口座を作成できませんでした。")
-        .setDescription(`口座「${accountName}」はすでに存在しています。他の名前をお試しください。`);
-      await interaction.reply({
+        .setColor("#2ecc70")
+        .setTitle("口座作成完了")
+        .setDescription(`口座「${accountName}」を作成しました！`);
+      return await interaction.reply({
         embeds: [embed],
         ephemeral: true
       });
-      return; // 早期終了しないと上書きされる
+
+    } catch (err) {
+      console.error(err);
+      return await interaction.reply({
+        content: '口座の作成中にエラーが発生しました。',
+        ephemeral: true
+      });
     }
-
-    await accountRef.set({
-      owner: userId,
-      password: password,
-      balance: 0,
-      createdAt: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
-    });
-
-    const embed = new EmbedBuilder()
-      .setColor("#2ecc70")
-      .setTitle("口座作成完了")
-      .setDescription(`口座「${accountName}」を作成しました！`);
-    await interaction.reply({
-      embeds: [embed],
-      ephemeral: true
-    });
-
-  } catch (err) {
-    console.error(err);
-    await interaction.reply({
-      content: '口座の作成中にエラーが発生しました。',
-      ephemeral: true
-    });
   }
-}
 }
 });
 

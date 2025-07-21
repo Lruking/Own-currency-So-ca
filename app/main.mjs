@@ -541,6 +541,7 @@ else if (interaction.commandName === 'check') {
 if (commandName === "pay") {
   const targetUser = interaction.options.getUser("user");
   const amount = interaction.options.getInteger("amount");
+  const commandName = interaction.commandName;
 
   if (!targetUser || targetUser.bot) {
     const embed = new EmbedBuilder()

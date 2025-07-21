@@ -428,14 +428,6 @@ else if (interaction.commandName === 'withdraw') {
       return await interaction.reply({ embeds: [embed], ephemeral: true });
     }
 
-    if (userData.balance < amount) {
-      const embed = new EmbedBuilder()
-        .setColor("#E74D3C")
-        .setTitle("エラー")
-        .setDescription("残高が足りません。");
-      return await interaction.reply({ embeds: [embed], ephemeral: true });
-    }
-
     // パスワードチェック
     // パスワードなし口座の場合、inputPasswordはnullか空文字のみ許可
     if (accountData.password) {

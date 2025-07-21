@@ -586,7 +586,7 @@ if (interaction.commandName === 'pay') {
       .setTitle("送金確認")
       .setDescription(`${targetUser.username} さんに ${amount} ソーカを送りますか？`);
 
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("confirm_pay")
         .setLabel("支払う")

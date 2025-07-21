@@ -657,7 +657,7 @@ if (commandName === "pay") {
   });
 }
   
-  else if (commandName === "claim") {
+else if (commandName === "claim") {
   const targetUser = interaction.options.getUser("target");
   const amount = interaction.options.getInteger("amount");
 
@@ -701,12 +701,23 @@ if (commandName === "pay") {
   );
 
   try {
+    await interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor("#F1C40F")
+          .setTitle("請求通知")
+          .setDescription(`<@${targetUser.id}> に、${amount}ソーカ請求しました。`)
+      ],
+      ephemeral: true
+    });
+
     await targetUser.send({ embeds: [claimEmbed], components: [row] });
+
     const sentEmbed = new EmbedBuilder()
       .setColor("#2ecc70")
       .setTitle("請求送信完了")
       .setDescription(`請求を <@${debtorId}> に送信しました。`);
-    await interaction.reply({ embeds: [sentEmbed], ephemeral: true });
+    await interaction.followUp({ embeds: [sentEmbed], ephemeral: true });
   } catch (err) {
     const errorEmbed = new EmbedBuilder()
       .setColor("#E74D3C")
@@ -726,7 +737,6 @@ if (commandName === "pay") {
         .setDescription(`<@${debtorId}> さんが請求を拒否しました。`);
       await i.update({ embeds: [cancelEmbed], components: [] });
 
-      // 請求者にDM通知
       try {
         const claimantUser = await client.users.fetch(claimantId);
         const notifyEmbed = new EmbedBuilder()
@@ -756,7 +766,10 @@ if (commandName === "pay") {
         return;
       }
 
-      const [debtorSnap, claimantSnap] = await Promise.all([debtorRef.once('value'), claimantRef.once('value')]);
+      const [debtorSnap, claimantSnap] = await Promise.all([
+        debtorRef.once('value'),
+        claimantRef.once('value')
+      ]);
       const debtorData = debtorSnap.val() || { balance: 0 };
       const claimantData = claimantSnap.val() || { balance: 0 };
 
@@ -779,7 +792,6 @@ if (commandName === "pay") {
         .setDescription(`${amount} ソーカを <@${claimantId}> さんに送金しました。`);
       await i.update({ embeds: [paidEmbed], components: [] });
 
-      // 請求者にDM通知
       try {
         const claimantUser = await client.users.fetch(claimantId);
         const notifyEmbed = new EmbedBuilder()
@@ -808,7 +820,6 @@ if (commandName === "pay") {
         // DM送れなくても無視
       }
 
-      // 請求者にDM通知
       try {
         const claimantUser = await client.users.fetch(claimantId);
         const notifyEmbed = new EmbedBuilder()

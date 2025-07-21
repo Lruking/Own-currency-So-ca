@@ -407,7 +407,6 @@ else if (interaction.commandName === 'withdraw') {
   const accountRef = db.ref(`accounts/${accountName}`);
 
   try {
-    // 口座とユーザーデータ取得
     const [userSnap, accountSnap] = await Promise.all([userRef.get(), accountRef.get()]);
     const userData = userSnap.val();
     const accountData = accountSnap.val();
@@ -429,9 +428,7 @@ else if (interaction.commandName === 'withdraw') {
     }
 
     // パスワードチェック
-    // パスワードなし口座の場合、inputPasswordはnullか空文字のみ許可
     if (accountData.password) {
-      // パスワードあり口座は作成者か正しいパスワードでないと拒否
       if (userId !== accountData.owner && inputPassword !== accountData.password) {
         const embed = new EmbedBuilder()
           .setColor("#E74D3C")
@@ -440,7 +437,6 @@ else if (interaction.commandName === 'withdraw') {
         return await interaction.reply({ embeds: [embed], ephemeral: true });
       }
     } else {
-      // パスワードなし口座は作成者のみ引き出し可
       if (userId !== accountData.owner) {
         const embed = new EmbedBuilder()
           .setColor("#E74D3C")
@@ -450,8 +446,7 @@ else if (interaction.commandName === 'withdraw') {
       }
     }
 
-    // 残高更新
-    await userRef.update({ balance: userData.balance + amount });
+    // newBalanceをここで計算してチェック
     const newBalance = (accountData.balance || 0) - amount;
     if (newBalance < 0) {
       const embed = new EmbedBuilder()
@@ -460,9 +455,11 @@ else if (interaction.commandName === 'withdraw') {
         .setDescription("口座の残高が不足しています。");
       return await interaction.reply({ embeds: [embed], ephemeral: true });
     }
+
+    // 残高更新
+    await userRef.update({ balance: userData.balance + amount });
     await accountRef.update({ balance: newBalance });
 
-    // 作成者以外が引き出した場合、作成者にDMで通知
     if (userId !== accountData.owner) {
       try {
         const ownerUser = await client.users.fetch(accountData.owner);
@@ -476,7 +473,6 @@ else if (interaction.commandName === 'withdraw') {
       }
     }
 
-    // 成功メッセージ
     const successEmbed = new EmbedBuilder()
       .setColor("#2ecc70")
       .setTitle("引き出し成功")
@@ -491,6 +487,7 @@ else if (interaction.commandName === 'withdraw') {
     });
   }
 }
+  
 else if (interaction.commandName === 'check') {
   const name = interaction.options.getString('name');
   const password = interaction.options.getString('password') ?? null;

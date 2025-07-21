@@ -115,6 +115,17 @@ const commands = [
     option.setName('amount')
       .setDescription('送金するソーカの金額')
       .setRequired(true)),
+  new SlashCommandBuilder()
+  .setName('claim')
+  .setDescription('他のユーザーにソーカの支払いを請求します')
+  .addUserOption(option =>
+    option.setName('target')
+      .setDescription('請求するユーザー')
+      .setRequired(true))
+  .addIntegerOption(option =>
+    option.setName('amount')
+      .setDescription('請求金額')
+      .setRequired(true)),
 ].map(command => command.toJSON());
 
 // コマンド登録処理

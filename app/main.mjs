@@ -678,11 +678,10 @@ else if (commandName === "claim") {
   }
 
   const claimantId = interaction.user.id;
-  const debtorId = targetUser.id;
-
-  const dbRef = admin.database().ref();
-  const claimantRef = dbRef.child(`users/${claimantId}`);
-  const debtorRef = dbRef.child(`users/${debtorId}`);
+  const debtorId   = targetUser.id;
+  const dbRef      = admin.database().ref();
+  const claimantRef= dbRef.child(`users/${claimantId}`);
+  const debtorRef  = dbRef.child(`users/${debtorId}`);
 
   const claimEmbed = new EmbedBuilder()
     .setColor("#F1C40F")
@@ -701,23 +700,139 @@ else if (commandName === "claim") {
   );
 
   try {
+    // 1) 請求通知を表示
     await interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setColor("#F1C40F")
           .setTitle("請求通知")
-          .setDescription(`<@${targetUser.id}> に、${amount}ソーカ請求しました。`)
+          .setDescription(`<@${debtorId}> に、${amount}ソーカ請求しました。`)
       ],
       ephemeral: true
     });
 
-    await targetUser.send({ embeds: [claimEmbed], components: [row] });
+    // 2) DMで請求 Embed＋ボタンを送信し、メッセージオブジェクトを得る
+    const dmMessage = await targetUser.send({ embeds: [claimEmbed], components: [row] });
 
-    const sentEmbed = new EmbedBuilder()
-      .setColor("#2ecc70")
-      .setTitle("請求送信完了")
-      .setDescription(`請求を <@${debtorId}> に送信しました。`);
-    await interaction.followUp({ embeds: [sentEmbed], ephemeral: true });
+    // 3) 送信完了をフォローアップ
+    await interaction.followUp({
+      embeds: [
+        new EmbedBuilder()
+          .setColor("#2ecc70")
+          .setTitle("請求送信完了")
+          .setDescription(`請求を <@${debtorId}> に送信しました。`)
+      ],
+      ephemeral: true
+    });
+
+    // 4) DMメッセージ上でのボタン反応を収集
+    const filter = i => i.user.id === debtorId &&
+      (i.customId.startsWith("claim_confirm_") || i.customId === "claim_cancel");
+    const collector = dmMessage.createMessageComponentCollector({ filter, time: 30000 });
+
+    collector.on("collect", async i => {
+      if (i.customId === "claim_cancel") {
+        const cancelEmbed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("請求拒否")
+          .setDescription(`<@${debtorId}> さんが請求を拒否しました。`);
+        await i.update({ embeds: [cancelEmbed], components: [] });
+
+        // 請求者にDM通知
+        try {
+          const claimantUser = await client.users.fetch(claimantId);
+          const notifyEmbed = new EmbedBuilder()
+            .setColor("#E74D3C")
+            .setTitle("請求が拒否されました")
+            .setDescription(`<@${debtorId}> さんがあなたの請求を拒否しました。`);
+          await claimantUser.send({ embeds: [notifyEmbed] });
+        } catch (err) {
+          console.error("請求者へのDM送信失敗:", err);
+        }
+        collector.stop();
+        return;
+      }
+
+      if (i.customId.startsWith("claim_confirm_")) {
+        const [, , cid, amt] = i.customId.split("_");
+        const amountFromId = Number(amt);
+
+        if (amountFromId !== amount || cid !== claimantId) {
+          const mismatchEmbed = new EmbedBuilder()
+            .setColor("#E74D3C")
+            .setTitle("エラー")
+            .setDescription("請求情報が一致しません。");
+          await i.update({ embeds: [mismatchEmbed], components: [] });
+          collector.stop();
+          return;
+        }
+
+        const [debtorSnap, claimantSnap] = await Promise.all([
+          debtorRef.once('value'),
+          claimantRef.once('value')
+        ]);
+        const debtorData   = debtorSnap.val()   || { balance: 0 };
+        const claimantData = claimantSnap.val() || { balance: 0 };
+
+        if (debtorData.balance < amount) {
+          const insufficientEmbed = new EmbedBuilder()
+            .setColor("#E74D3C")
+            .setTitle("残高不足")
+            .setDescription("残高が不足しています。支払いできません。");
+          await i.update({ embeds: [insufficientEmbed], components: [] });
+          collector.stop();
+          return;
+        }
+
+        await debtorRef.update({   balance: debtorData.balance - amount });
+        await claimantRef.update({ balance: claimantData.balance + amount });
+
+        const paidEmbed = new EmbedBuilder()
+          .setColor("#2ECC71")
+          .setTitle("支払い完了")
+          .setDescription(`${amount} ソーカを <@${claimantId}> さんに送金しました。`);
+        await i.update({ embeds: [paidEmbed], components: [] });
+
+        // 請求者にDM通知
+        try {
+          const claimantUser = await client.users.fetch(claimantId);
+          const notifyEmbed = new EmbedBuilder()
+            .setColor("#2ECC71")
+            .setTitle("請求が支払われました")
+            .setDescription(`<@${debtorId}> さんから ${amount} ソーカの支払いがありました。`);
+          await claimantUser.send({ embeds: [notifyEmbed] });
+        } catch (err) {
+          console.error("請求者へのDM送信失敗:", err);
+        }
+
+        collector.stop();
+      }
+    });
+
+    collector.on("end", async collected => {
+      if (collected.size === 0) {
+        const timeoutEmbed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("タイムアウト")
+          .setDescription("請求の回答がありませんでした。請求はキャンセルされました。");
+
+        try {
+          await targetUser.send({ embeds: [timeoutEmbed] });
+        } catch {}
+
+        try {
+          const claimantUser = await client.users.fetch(claimantId);
+          const notifyEmbed = new EmbedBuilder()
+            .setColor("#E74D3C")
+            .setTitle("請求がタイムアウトしました")
+            .setDescription(`<@${debtorId}> さんが請求に応答しませんでした。請求はキャンセルされました。`);
+          await claimantUser.send({ embeds: [notifyEmbed] });
+        } catch (err) {
+          console.error("請求者へのDM送信失敗:", err);
+        }
+      }
+    });
+
   } catch (err) {
     const errorEmbed = new EmbedBuilder()
       .setColor("#E74D3C")
@@ -725,114 +840,8 @@ else if (commandName === "claim") {
       .setDescription("請求先にDMを送信できませんでした。DMが開いているか確認してください。");
     return await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
   }
-
-  const filter = i => i.user.id === debtorId && (i.customId.startsWith("claim_confirm_") || i.customId === "claim_cancel");
-  const collector = interaction.channel.createMessageComponentCollector({ filter, time: 30000 });
-
-  collector.on("collect", async i => {
-    if (i.customId === "claim_cancel") {
-      const cancelEmbed = new EmbedBuilder()
-        .setColor("#E74D3C")
-        .setTitle("請求拒否")
-        .setDescription(`<@${debtorId}> さんが請求を拒否しました。`);
-      await i.update({ embeds: [cancelEmbed], components: [] });
-
-      try {
-        const claimantUser = await client.users.fetch(claimantId);
-        const notifyEmbed = new EmbedBuilder()
-          .setColor("#E74D3C")
-          .setTitle("請求が拒否されました")
-          .setDescription(`<@${debtorId}> さんがあなたの請求を拒否しました。`);
-        await claimantUser.send({ embeds: [notifyEmbed] });
-      } catch (err) {
-        console.error("請求者へのDM送信失敗:", err);
-      }
-      collector.stop();
-      return;
-    }
-
-    if (i.customId.startsWith("claim_confirm_")) {
-      const parts = i.customId.split("_");
-      const claimantIdFromId = parts[2];
-      const amountFromId = Number(parts[3]);
-
-      if (amountFromId !== amount || claimantIdFromId !== claimantId) {
-        const mismatchEmbed = new EmbedBuilder()
-          .setColor("#E74D3C")
-          .setTitle("エラー")
-          .setDescription("請求情報が一致しません。");
-        await i.update({ embeds: [mismatchEmbed], components: [] });
-        collector.stop();
-        return;
-      }
-
-      const [debtorSnap, claimantSnap] = await Promise.all([
-        debtorRef.once('value'),
-        claimantRef.once('value')
-      ]);
-      const debtorData = debtorSnap.val() || { balance: 0 };
-      const claimantData = claimantSnap.val() || { balance: 0 };
-
-      if (debtorData.balance < amount) {
-        const insufficientEmbed = new EmbedBuilder()
-          .setColor("#E74D3C")
-          .setTitle("残高不足")
-          .setDescription("残高が不足しています。支払いできません。");
-        await i.update({ embeds: [insufficientEmbed], components: [] });
-        collector.stop();
-        return;
-      }
-
-      await debtorRef.update({ balance: debtorData.balance - amount });
-      await claimantRef.update({ balance: claimantData.balance + amount });
-
-      const paidEmbed = new EmbedBuilder()
-        .setColor("#2ECC71")
-        .setTitle("支払い完了")
-        .setDescription(`${amount} ソーカを <@${claimantId}> さんに送金しました。`);
-      await i.update({ embeds: [paidEmbed], components: [] });
-
-      try {
-        const claimantUser = await client.users.fetch(claimantId);
-        const notifyEmbed = new EmbedBuilder()
-          .setColor("#2ECC71")
-          .setTitle("請求が支払われました")
-          .setDescription(`<@${debtorId}> さんから ${amount} ソーカの支払いがありました。`);
-        await claimantUser.send({ embeds: [notifyEmbed] });
-      } catch (err) {
-        console.error("請求者へのDM送信失敗:", err);
-      }
-
-      collector.stop();
-    }
-  });
-
-  collector.on("end", async collected => {
-    if (collected.size === 0) {
-      const timeoutEmbed = new EmbedBuilder()
-        .setColor("#E74D3C")
-        .setTitle("タイムアウト")
-        .setDescription("請求の回答がありませんでした。請求はキャンセルされました。");
-
-      try {
-        await targetUser.send({ embeds: [timeoutEmbed] });
-      } catch {
-        // DM送れなくても無視
-      }
-
-      try {
-        const claimantUser = await client.users.fetch(claimantId);
-        const notifyEmbed = new EmbedBuilder()
-          .setColor("#E74D3C")
-          .setTitle("請求がタイムアウトしました")
-          .setDescription(`<@${debtorId}> さんが請求に応答しませんでした。請求はキャンセルされました。`);
-        await claimantUser.send({ embeds: [notifyEmbed] });
-      } catch (err) {
-        console.error("請求者へのDM送信失敗:", err);
-      }
-    }
-  });
 }
+
 
 }); // これが interactionCreate のイベントリスナー閉じ
 // Botログイン

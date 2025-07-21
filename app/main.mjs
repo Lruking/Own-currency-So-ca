@@ -92,7 +92,7 @@ const commands = [
     option.setName('password')
     .setDescription('（任意）パスワード')
     .setRequired(false)
-    )
+    ),
   new SlashCommandBuilder()
   .setName('pay')
   .setDescription('他のユーザーにソーカを送ります')

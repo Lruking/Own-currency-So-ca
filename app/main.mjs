@@ -93,6 +93,17 @@ const commands = [
     .setDescription('（任意）パスワード')
     .setRequired(false)
     )
+  new SlashCommandBuilder()
+  .setName('pay')
+  .setDescription('他のユーザーにソーカを送ります')
+  .addUserOption(option =>
+    option.setName('target')
+      .setDescription('送金先のユーザー')
+      .setRequired(true))
+  .addIntegerOption(option =>
+    option.setName('amount')
+      .setDescription('送金するソーカの金額')
+      .setRequired(true)),
 ].map(command => command.toJSON());
 
 // コマンド登録処理
@@ -526,6 +537,156 @@ else if (interaction.commandName === 'check') {
   return await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 }
+  
+if (interaction.commandName === 'pay') {
+  const senderId = interaction.user.id;
+  const senderName = interaction.user.username;
+  const targetUser = interaction.options.getUser('target', true);
+  const targetId = targetUser.id;
+  const amount = interaction.options.getInteger('amount', true);
+
+  if (amount <= 0 || !Number.isInteger(amount)) {
+    const embed = new EmbedBuilder()
+      .setColor("#E74D3C")
+      .setTitle("エラー")
+      .setDescription("金額は1以上の整数で指定してください。");
+    return await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  try {
+    const senderRef = db.ref(`users/${senderId}`);
+    const targetRef = db.ref(`users/${targetId}`);
+
+    const [senderSnap, targetSnap] = await Promise.all([
+      senderRef.once('value'),
+      targetRef.once('value'),
+    ]);
+    const senderData = senderSnap.val();
+    const targetData = targetSnap.val() ?? { balance: 0 };
+
+    if (!senderData || senderData.balance == null) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription("あなたのアカウント情報が見つかりません。/login してください。");
+      return await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    if (senderData.balance < amount) {
+      const embed = new EmbedBuilder()
+        .setColor("#E74D3C")
+        .setTitle("エラー")
+        .setDescription("残高が足りません。");
+      return await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    // 確認用Embedとボタン
+    const confirmEmbed = new EmbedBuilder()
+      .setColor("#FFD700")
+      .setTitle("送金確認")
+      .setDescription(`${targetUser.username} さんに ${amount} ソーカを送りますか？`);
+
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("confirm_pay")
+        .setLabel("支払う")
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId("cancel_pay")
+        .setLabel("キャンセル")
+        .setStyle(ButtonStyle.Danger)
+    );
+
+    await interaction.reply({
+      embeds: [confirmEmbed],
+      components: [row],
+      ephemeral: true,
+    });
+
+    const filter = (i) => i.user.id === senderId;
+
+    const collector = interaction.channel.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 15000,
+      filter,
+    });
+
+    collector.on("collect", async (i) => {
+      if (i.customId === "confirm_pay") {
+        // 送金前に残高再チェック（安全性のため）
+        const updatedSenderSnap = await senderRef.once("value");
+        const updatedSenderData = updatedSenderSnap.val();
+
+        if (!updatedSenderData || updatedSenderData.balance < amount) {
+          const embed = new EmbedBuilder()
+            .setColor("#E74D3C")
+            .setTitle("エラー")
+            .setDescription("残高が不足しています。送金を中止します。");
+          return i.update({ embeds: [embed], components: [], ephemeral: true });
+        }
+
+        // 残高更新
+        const senderNewBalance = updatedSenderData.balance - amount;
+        const targetNewBalance = (targetData.balance || 0) + amount;
+
+        await senderRef.update({ balance: senderNewBalance });
+        await targetRef.update({ balance: targetNewBalance });
+
+        const successEmbed = new EmbedBuilder()
+          .setColor("#2ecc71")
+          .setTitle("送金完了")
+          .setDescription(`${targetUser.username} さんに ${amount} ソーカを送金しました！\n現在の残高：${senderNewBalance} ソーカ`);
+
+        await i.update({ embeds: [successEmbed], components: [], ephemeral: true });
+
+        // DM通知（受取側）
+        try {
+          const dmEmbed = new EmbedBuilder()
+            .setColor("#FFD700")
+            .setTitle("ソーカを受け取りました")
+            .setDescription(`${senderName} さんから ${amount} ソーカを受け取りました！\n現在の残高：${targetNewBalance} ソーカ`);
+          await targetUser.send({ embeds: [dmEmbed] });
+        } catch (err) {
+          console.error("DM送信に失敗しました:", err);
+        }
+      } else if (i.customId === "cancel_pay") {
+        const cancelEmbed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("キャンセル")
+          .setDescription("送金をキャンセルしました。");
+
+        await i.update({ embeds: [cancelEmbed], components: [], ephemeral: true });
+      }
+    });
+
+    collector.on("end", async (collected) => {
+      if (collected.size === 0) {
+        const timeoutEmbed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("タイムアウト")
+          .setDescription(" タイムアウトにより送金はキャンセルされました。");
+
+        await interaction.editReply({
+          embeds: [timeoutEmbed],
+          components: [],
+          ephemeral: true,
+        });
+      }
+    });
+  } catch (error) {
+    console.error("payコマンド処理中のエラー:", error);
+    const embed = new EmbedBuilder()
+      .setColor("#E74D3C")
+      .setTitle("エラー")
+      .setDescription("送金処理中にエラーが発生しました。もう一度お試しください。");
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ embeds: [embed], ephemeral: true });
+    } else {
+      await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+  }
+}
+
 }); // これが interactionCreate のイベントリスナー閉じ
 // Botログイン
 client.login(token);

@@ -657,7 +657,7 @@ if (commandName === "pay") {
   });
 }
   
-else if (commandName === "claim") {
+else if (interaction.commandName === "claim") {
   const targetUser = interaction.options.getUser("target");
   const amount = interaction.options.getInteger("amount");
 
@@ -700,7 +700,7 @@ else if (commandName === "claim") {
   );
 
   try {
-    // 1) 請求通知を表示
+    // ① Ephemeral で請求通知（ここだけ reply）
     await interaction.reply({
       embeds: [
         new EmbedBuilder()
@@ -711,10 +711,10 @@ else if (commandName === "claim") {
       ephemeral: true
     });
 
-    // 2) DMで請求 Embed＋ボタンを送信し、メッセージオブジェクトを得る
+    // ② DM 送信してメッセージオブジェクト取得
     const dmMessage = await targetUser.send({ embeds: [claimEmbed], components: [row] });
 
-    // 3) 送信完了をフォローアップ
+    // ③ 通知完了をフォローアップ（ここは followUp）
     await interaction.followUp({
       embeds: [
         new EmbedBuilder()
@@ -725,7 +725,7 @@ else if (commandName === "claim") {
       ephemeral: true
     });
 
-    // 4) DMメッセージ上でのボタン反応を収集
+    // ④ DM 上でのボタン反応を待機
     const filter = i => i.user.id === debtorId &&
       (i.customId.startsWith("claim_confirm_") || i.customId === "claim_cancel");
     const collector = dmMessage.createMessageComponentCollector({ filter, time: 30000 });
@@ -738,7 +738,6 @@ else if (commandName === "claim") {
           .setDescription(`<@${debtorId}> さんが請求を拒否しました。`);
         await i.update({ embeds: [cancelEmbed], components: [] });
 
-        // 請求者にDM通知
         try {
           const claimantUser = await client.users.fetch(claimantId);
           const notifyEmbed = new EmbedBuilder()
@@ -755,9 +754,7 @@ else if (commandName === "claim") {
 
       if (i.customId.startsWith("claim_confirm_")) {
         const [, , cid, amt] = i.customId.split("_");
-        const amountFromId = Number(amt);
-
-        if (amountFromId !== amount || cid !== claimantId) {
+        if (cid !== claimantId || Number(amt) !== amount) {
           const mismatchEmbed = new EmbedBuilder()
             .setColor("#E74D3C")
             .setTitle("エラー")
@@ -793,7 +790,6 @@ else if (commandName === "claim") {
           .setDescription(`${amount} ソーカを <@${claimantId}> さんに送金しました。`);
         await i.update({ embeds: [paidEmbed], components: [] });
 
-        // 請求者にDM通知
         try {
           const claimantUser = await client.users.fetch(claimantId);
           const notifyEmbed = new EmbedBuilder()
@@ -815,11 +811,7 @@ else if (commandName === "claim") {
           .setColor("#E74D3C")
           .setTitle("タイムアウト")
           .setDescription("請求の回答がありませんでした。請求はキャンセルされました。");
-
-        try {
-          await targetUser.send({ embeds: [timeoutEmbed] });
-        } catch {}
-
+        try { await targetUser.send({ embeds: [timeoutEmbed] }); } catch {}
         try {
           const claimantUser = await client.users.fetch(claimantId);
           const notifyEmbed = new EmbedBuilder()
@@ -838,7 +830,8 @@ else if (commandName === "claim") {
       .setColor("#E74D3C")
       .setTitle("エラー")
       .setDescription("請求先にDMを送信できませんでした。DMが開いているか確認してください。");
-    return await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+    // 既に reply 済みなので followUp でエラー通知
+    return await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
   }
 }
 

@@ -512,11 +512,17 @@ else if (interaction.commandName === 'check') {
       .setDescription("入力した共有パスワードが違います。");
     return await interaction.reply({ embeds: [embed], ephemeral: true });
   }
-
+  if ((data.password && data.password === password) || (!data.password && interaction.user.id === data.ownerId)) {
   const embed = new EmbedBuilder()
     .setColor("#2ecc70")
     .setTitle("口座の残高")
     .setDescription(`口座 **${name}** の残高は **${data.balance} ソーカ** です。`);
+  return await interaction.reply({ embeds: [embed], ephemeral: true });
+} else {
+  const embed = new EmbedBuilder()
+    .setColor("#E74D3C")
+    .setTitle("エラー")
+    .setDescription(`あなたはこの口座の作成者ではないため確認できません。`);
   return await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 }); // これが interactionCreate のイベントリスナー閉じ

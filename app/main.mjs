@@ -714,17 +714,6 @@ else if (interaction.commandName === "claim") {
     // ② DM 送信してメッセージオブジェクト取得
     const dmMessage = await targetUser.send({ embeds: [claimEmbed], components: [row] });
 
-    // ③ 通知完了をフォローアップ（ここは followUp）
-    await interaction.followUp({
-      embeds: [
-        new EmbedBuilder()
-          .setColor("#2ecc70")
-          .setTitle("請求送信完了")
-          .setDescription(`請求を <@${debtorId}> に送信しました。`)
-      ],
-      ephemeral: true
-    });
-
     // ④ DM 上でのボタン反応を待機
     const filter = i => i.user.id === debtorId &&
       (i.customId.startsWith("claim_confirm_") || i.customId === "claim_cancel");

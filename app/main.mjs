@@ -124,7 +124,7 @@ const commands = [
       .setRequired(true))
   .addIntegerOption(option =>
     option.setName('amount')
-      .setDescription('請求金額')
+      .setDescription('請求額')
       .setRequired(true)),
 ].map(command => command.toJSON());
 

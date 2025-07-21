@@ -525,6 +525,7 @@ else if (interaction.commandName === 'check') {
     .setDescription(`あなたはこの口座の作成者ではないため確認できません。`);
   return await interaction.reply({ embeds: [embed], ephemeral: true });
 }
+}
 }); // これが interactionCreate のイベントリスナー閉じ
 // Botログイン
 client.login(token);

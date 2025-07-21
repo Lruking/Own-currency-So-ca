@@ -459,7 +459,7 @@ else if (interaction.commandName === 'withdraw') {
     }
 
     // 残高更新
-    await userRef.update({ balance: userData.balance - amount });
+    await userRef.update({ balance: userData.balance + amount });
     const newBalance = (accountData.balance || 0) - amount;
     if (newBalance < 0) {
       const embed = new EmbedBuilder()

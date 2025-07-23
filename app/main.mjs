@@ -104,11 +104,11 @@ const commands = [
     .setDescription('（任意）パスワード')
     .setRequired(false)
     ),
-  new SlashCommandBuilder()
+new SlashCommandBuilder()
   .setName('pay')
   .setDescription('他のユーザーにソーカを送ります')
   .addUserOption(option =>
-    option.setName('target')
+    option.setName('user') // ← ここを "target" から "user" に修正！
       .setDescription('送金先のユーザー')
       .setRequired(true))
   .addIntegerOption(option =>

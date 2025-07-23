@@ -572,11 +572,7 @@ if (commandName === "pay") {
 
   const senderId = interaction.user.id;
   const recipientId = targetUser.id;
-
-  // Firestore 初期化確認（ここが原因のことが多い！）
-  const firestore = require('firebase-admin').firestore;
-  const dbInstance = firestore(); // ← db.collection の代わり
-
+  const dbInstance = db;
   const senderRef = dbInstance.collection("users").doc(senderId);
   const recipientRef = dbInstance.collection("users").doc(recipientId);
 

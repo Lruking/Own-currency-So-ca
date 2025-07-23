@@ -573,10 +573,24 @@ if (commandName === "pay") {
   const senderId = interaction.user.id;
   const recipientId = targetUser.id;
 
-  const senderRef = db.collection("users").doc(senderId);
-  const recipientRef = db.collection("users").doc(recipientId);
+  // Firestore 初期化確認（ここが原因のことが多い！）
+  const firestore = require('firebase-admin').firestore;
+  const dbInstance = firestore(); // ← db.collection の代わり
 
-  const senderDoc = await senderRef.get();
+  const senderRef = dbInstance.collection("users").doc(senderId);
+  const recipientRef = dbInstance.collection("users").doc(recipientId);
+
+  let senderDoc;
+  try {
+    senderDoc = await senderRef.get();
+  } catch (err) {
+    console.error("Firestore エラー:", err);
+    return await interaction.reply({
+      content: "データベース接続に失敗しました。",
+      ephemeral: true,
+    });
+  }
+
   if (!senderDoc.exists || (senderDoc.data().balance || 0) < amount) {
     const embed = new EmbedBuilder()
       .setColor("#E74D3C")

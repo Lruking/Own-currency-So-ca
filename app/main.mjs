@@ -572,22 +572,24 @@ if (commandName === "pay") {
 
   const senderId = interaction.user.id;
   const recipientId = targetUser.id;
-  const dbInstance = db;
-  const senderRef = dbInstance.collection("users").doc(senderId);
-  const recipientRef = dbInstance.collection("users").doc(recipientId);
 
-  let senderDoc;
+  const senderRef = db.ref(`users/${senderId}`);
+  const recipientRef = db.ref(`users/${recipientId}`);
+
+  // senderのデータ取得
+  let senderData;
   try {
-    senderDoc = await senderRef.get();
+    const snapshot = await senderRef.once('value');
+    senderData = snapshot.val();
   } catch (err) {
-    console.error("Firestore エラー:", err);
+    console.error("RealtimeDB エラー:", err);
     return await interaction.reply({
       content: "データベース接続に失敗しました。",
       ephemeral: true,
     });
   }
 
-  if (!senderDoc.exists || (senderDoc.data().balance || 0) < amount) {
+  if (!senderData || (senderData.balance || 0) < amount) {
     const embed = new EmbedBuilder()
       .setColor("#E74D3C")
       .setTitle("エラー")
@@ -618,23 +620,36 @@ if (commandName === "pay") {
 
   collector.on("collect", async (i) => {
     if (i.customId === "confirm") {
-      const recipientDoc = await recipientRef.get();
-      const senderBalance = senderDoc.data().balance || 0;
-      const recipientBalance = recipientDoc.exists ? recipientDoc.data().balance || 0 : 0;
+      try {
+        const recipientSnapshot = await recipientRef.once('value');
+        const recipientData = recipientSnapshot.val();
 
-      await senderRef.update({ balance: senderBalance - amount });
-      if (recipientDoc.exists) {
-        await recipientRef.update({ balance: recipientBalance + amount });
-      } else {
-        await recipientRef.set({ balance: amount });
+        // 送金元残高更新
+        await senderRef.update({ balance: (senderData.balance || 0) - amount });
+
+        if (recipientData) {
+          // 受取人が存在すれば残高加算
+          await recipientRef.update({ balance: (recipientData.balance || 0) + amount });
+        } else {
+          // 受取人がまだデータを持ってなければ新規作成
+          await recipientRef.set({ balance: amount });
+        }
+
+        const embed = new EmbedBuilder()
+          .setColor("#2ECC71")
+          .setTitle("送金完了")
+          .setDescription(`<@${recipientId}> に ${amount} ソーカを送金しました。`);
+
+        await i.update({ embeds: [embed], components: [] });
+      } catch (err) {
+        console.error("送金処理エラー:", err);
+        const embed = new EmbedBuilder()
+          .setColor("#E74D3C")
+          .setTitle("エラー")
+          .setDescription("送金処理中にエラーが発生しました。");
+
+        await i.update({ embeds: [embed], components: [] });
       }
-
-      const embed = new EmbedBuilder()
-        .setColor("#2ECC71")
-        .setTitle("送金完了")
-        .setDescription(`<@${recipientId}> に ${amount} ソーカを送金しました。`);
-
-      await i.update({ embeds: [embed], components: [] });
       collector.stop();
     } else if (i.customId === "cancel") {
       const embed = new EmbedBuilder()

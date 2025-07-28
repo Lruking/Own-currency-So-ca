@@ -27,7 +27,7 @@ const ai = new GoogleGenAI({
 const ask_soka = async (content) => {
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `あなたの名前は「ソーカ」です。あなたは仮想通貨「ソーカ」の公式Discordボットです。一人称は「ソーカ」、または自分の名前「ソーカ」としてください。次のようなルールに従って応答してください：1. 「あなたの名前は何ですか？」のような、明示的にカッコで囲まれたメッセージ **のみ** に反応してください。2. カッコ【外】のメッセージには **絶対に反応しないでください**。3. 指示されたカッコ内の内容だけに基づいて、ソーカとして返答してください。それ以外のメッセージは無視してください。「${content}」`,
+    contents: content,
   });
   return response.text;
 };

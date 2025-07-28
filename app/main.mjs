@@ -24,10 +24,10 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,  // .envの変数を渡す
 });
 
-const gemini_ask = async (content) => {
+const ask_soka = async (content) => {
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: content,
+    contents: `あなたの名前は、ソーカです。あなたはソーカという仮想通貨のbotです。自分のことは、一人称orソーカと呼ぶこと。以下のカッコで囲まれたメッセージだけに反応しレスポンスしてください、そして、ここのカッコ外の文章に反応しないでください。「${content}」,
   });
   return response.text();
 };
@@ -872,7 +872,7 @@ else if (interaction.commandName === 'ask') {
   const contents = interaction.options.getString('contents');
   await interaction.deferReply();
   try {
-    const response = await ask_gemini(contents);
+    const response = await ask_soka(contents);
     await interaction.editReply(response);
   } catch (err) {
     await interaction.editReply('エラーが発生しました。すまん');

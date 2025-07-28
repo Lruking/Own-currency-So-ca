@@ -27,7 +27,7 @@ const ai = new GoogleGenAI({
 const ask_soka = async (content) => {
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: content,
+    contents: `あなたの名前はdiscordの仮想通貨bot、「ソーカ」です。それを踏まえ、右のカッコ内だけに反応しレスポンスしてください。「${content}」`,
   });
   return response.text;
 };

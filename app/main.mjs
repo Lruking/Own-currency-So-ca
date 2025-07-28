@@ -894,10 +894,11 @@ else if (interaction.commandName === "claim") {
 }
 else if (interaction.commandName === 'ask') {
   const contents = interaction.options.getString('contents');
+  const username = interaction.user.username;
   await interaction.deferReply();
   try {
     const response = await ask_soka(contents);
-    await interaction.editReply(response);
+    await interaction.editReply(`${username} さんの質問：「${contents}」\n\n${response}`);
   } catch (err) {
     await interaction.editReply('エラーが発生しました。すまん');
     console.error(err);

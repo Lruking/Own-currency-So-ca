@@ -21,7 +21,7 @@ const guildId = process.env.TEST_SERVER;
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,  // .envの変数を渡す
+  apiKey: process.env.GEMINI_API,  // .envの変数を渡す
 });
 
 const ask_soka = async (content) => {

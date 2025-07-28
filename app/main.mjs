@@ -13,12 +13,24 @@ import {
 import 'dotenv/config';
 import admin from 'firebase-admin';
 import express from 'express';
+import { GoogleGenAI } from '@google/genai';
 
 const token = process.env.TOKEN;
 const clientId = process.env.APPLICATION_ID;
 const guildId = process.env.TEST_SERVER;
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,  // .envの変数を渡す
+});
+
+const gemini_ask = async (content) => {
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: content,
+  });
+  return response.text();
+};
 
 // FirebaseサービスアカウントのJSON文字列を環境変数から取得！
 const rawData = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -126,6 +138,14 @@ new SlashCommandBuilder()
     option.setName('amount')
       .setDescription('請求額')
       .setRequired(true)),
+  new SlashCommandBuilder()
+  .setName('ask')
+  .setDescription('geminiに質問します')
+  .addStringOption(option =>
+    option.setName('contents')
+      .setDescription('質問内容')
+      .setRequired(true)
+  ),
 ].map(command => command.toJSON());
 
 // コマンド登録処理
@@ -848,7 +868,17 @@ else if (interaction.commandName === "claim") {
     return await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
   }
 }
-
+else if (interaction.commandName === 'ask') {
+  const contents = interaction.options.getString('contents');
+  await interaction.deferReply();
+  try {
+    const response = await ask_gemini(contents);
+    await interaction.editReply(response);
+  } catch (err) {
+    await interaction.editReply('エラーが発生しました。すまん');
+    console.error(err);
+  }
+}
 
 }); // これが interactionCreate のイベントリスナー閉じ
 // Botログイン

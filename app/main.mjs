@@ -1045,7 +1045,7 @@ else if (interaction.commandName === 'useai') {
     });
 
     const response = result.text;
-    await interaction.editReply(`${username} さんの質問：「${contents}」\n\n${response}`);
+    await interaction.editReply(`${username} さんの質問：「${contents}」\n\n${ainame}の回答：${response}`);
 
   } catch (error) {
     console.error(error);

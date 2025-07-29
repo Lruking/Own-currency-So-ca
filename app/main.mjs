@@ -193,8 +193,8 @@ new SlashCommandBuilder()
     option.setName('ainame')
       .setDescription('作成するAIの名前')
       .setRequired(true)
-  ),
-    .addStringOption(option =>
+  )
+  .addStringOption(option => // ← ✅ ピリオドチェーンに修正
     option.setName('explanation')
       .setDescription('AIの調教文')
       .setRequired(true)

@@ -186,7 +186,7 @@ new SlashCommandBuilder()
       .setDescription('質問内容')
       .setRequired(true)
   ),
-  new SlashCommandBuilder()
+    new SlashCommandBuilder()
   .setName('provide')
   .setDescription('あなたのAIを作ることができる。')
   .addStringOption(option =>
@@ -194,11 +194,12 @@ new SlashCommandBuilder()
       .setDescription('作成するAIの名前')
       .setRequired(true)
   )
-  .addStringOption(option => // ← ✅ ピリオドチェーンに修正
+  .addStringOption(option =>
     option.setName('explanation')
       .setDescription('AIの調教文')
       .setRequired(true)
-  ),
+  ), // ← ✅ カンマをここに追加！
+  
   new SlashCommandBuilder()
   .setName('useai')
   .setDescription('作成されたAIを使えます。')
@@ -206,8 +207,8 @@ new SlashCommandBuilder()
     option.setName('ainame')
       .setDescription('使用するAIの名前')
       .setRequired(true)
-  ),
-    .addStringOption(option =>
+  )
+  .addStringOption(option =>
     option.setName('contents')
       .setDescription('質問内容')
       .setRequired(true)

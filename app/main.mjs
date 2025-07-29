@@ -25,6 +25,7 @@ const ai = new GoogleGenAI({
 });
 
 const help_soka = async (content) => {
+  console.log("help_sokaを読み込みました");
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: [
@@ -55,6 +56,7 @@ const help_soka = async (content) => {
 };
 
 const ask_ai = async (content) => {
+  console.log("ask_aiを読み込みました");
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: [

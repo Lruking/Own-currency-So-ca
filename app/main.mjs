@@ -916,9 +916,9 @@ else if (interaction.commandName === "claim") {
   }
 }
 else if (interaction.commandName === 'ask') {
+  await interaction.deferReply();
   const contents = interaction.options.getString('contents');
   const username = interaction.user.username;
-  await interaction.deferReply();
   try {
     const response = await ask_ai(contents);
     await interaction.editReply(`${username} さんの質問：「${contents}」\n\n${response}`);
@@ -928,9 +928,9 @@ else if (interaction.commandName === 'ask') {
   }
 }
 else if (interaction.commandName === 'help') {
+  await interaction.deferReply();
   const contents = interaction.options.getString('contents');
   const username = interaction.user.username;
-  await interaction.deferReply();
   try {
     const response = await help_soka(contents);
     await interaction.editReply(`${username} さんの質問：「${contents}」\n\n${response}`);

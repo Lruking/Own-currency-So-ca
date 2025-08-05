@@ -224,7 +224,7 @@ const commands = [
 
     new SlashCommandBuilder()
         .setName('useai')
-        .setDescription('作成されたAIを使えます。')
+        .setDescription('作成されたAIを使えます')
         .addStringOption(option =>
             option.setName('ainame')
                 .setDescription('使用するAIの名前')

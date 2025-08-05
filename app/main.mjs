@@ -993,11 +993,12 @@ client.on('interactionCreate', async (interaction) => {
         try {
             const snapshot = await aiRef.once('value');
             const data = snapshot.val();
-
+            await description = ai_explanation(explanation);
             if (!data) {
                 await aiRef.set({
                     explanation: explanation,
-                    owner: userId
+                    owner: userId,
+                    description: description
                 });
 
                 const embed = new EmbedBuilder()
@@ -1009,7 +1010,9 @@ client.on('interactionCreate', async (interaction) => {
             }
 
             if (data.owner === userId) {
+                await description = ai_explanation(explanation);
                 data.explanation = explanation;
+                data.explanation = description;
                 await aiRef.set(data);
 
                 const embed = new EmbedBuilder()

@@ -746,13 +746,21 @@ client.on('interactionCreate', async (interaction) => {
                         // 受取人がまだデータを持ってなければ新規作成
                         await recipientRef.set({ balance: amount });
                     }
-
                     const embed = new EmbedBuilder()
                         .setColor("#2ECC71")
                         .setTitle("送金完了")
                         .setDescription(`<@${recipientId}> に ${amount} ソーカを送金しました。`);
-
                     await i.update({ embeds: [embed], components: [] });
+                    const recipientEmbed = new EmbedBuilder()
+                        .setColor("#2ECC71")
+                        .setTitle("入金通知")
+                        .setDescription(`<@${senderId}> から ${amount} ソーカを受け取りました。\n現在の残高：${recipientData.balance}ソーカ`);
+                    try {
+                        await targetUser.send({ embeds: [recipientEmbed] });
+                    } catch (dmErr) {
+                        console.warn(`DMを送れませんでした (${targetUser.tag}):`, dmErr);
+                        // DM送信失敗時にサーバーで通知したい場合はここに fallback を書ける
+                    }
                 } catch (err) {
                     console.error("送金処理エラー:", err);
                     const embed = new EmbedBuilder()
